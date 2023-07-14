@@ -1,55 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File uploader</title>
 </head>
+
 <body>
     <h1>My file uploader</h1>
 
-    File: <input type ='file' id = 'f'>
-    <button id = 'btnUpload'>Read & Upload</button>
-    <div id = 'divOutput'>
+    File: <input type='file' id='f'>
+    <button id='btnUpload'>Read & Upload</button>
+    <input type="button" id='pause' value="resumed">
+
+    <div id='divOutput'>
 
     </div>
 
     <script>
+        /*
+        * @TODO :: lowest number is the highest priority
+        * 1 fix the resume functionality: it should not create a new file when resuming
+        * 2 organise the code
+        * 3 integrate it with watchIT
+        */
+        let isResumed = true
+        let lastChunkIDUploaded = 0
+        console.log(lastChunkIDUploaded)
         const btnUpload = document.getElementById("btnUpload");
         const divOutput = document.getElementById("divOutput");
+        const pauseBtn = document.getElementById("pause");
+
         const f = document.getElementById("f");
+        pauseBtn.addEventListener("click", function () {
+            // if (isResumed) {
+            console.log(lastChunkIDUploaded,'sdfsdfsd')
 
-        btnUpload.addEventListener("click", () => {
+            isResumed = !isResumed
+            console.log('resumed', isResumed)
+            if (isResumed) {
+                pauseBtn.value = 'resumed'
+                upload()
+            } else {
+                pauseBtn.value = 'paused'
 
-            const fileReader = new FileReader();
-            const theFile = f.files[0];
-            fileReader.onload = async ev => {
-
-                const CHUNK_SIZE = 5000;
-                const chunkCount = ev.target.result.byteLength/CHUNK_SIZE;
-                 
-                console.log("Read successfully");
-                const fileName = Math.random() * 1000 + theFile.name;
-                for (let chunkId = 0; chunkId < chunkCount + 1; chunkId ++ )
-                {
-                    const chunk = ev.target.result.slice(chunkId * CHUNK_SIZE, chunkId * CHUNK_SIZE + CHUNK_SIZE );
-                    await fetch ("http://localhost:8080/upload", {
-                        "method": "POST",
-                        "headers": {
-                            "content-type": "application/octet-stream",
-                            "content-length": chunk.length,
-                            "file-name": fileName
-                        },
-                        "body": chunk
-                    })
-                    divOutput.textContent = Math.round(chunkId * 100/chunkCount,0) + "%"
-                }
-                console.log(ev.target.result.byteLength);
             }
-            fileReader.readAsArrayBuffer(theFile); 
         })
 
+        btnUpload.addEventListener("click", () => {
+            // console.log(lastChunkIDUploaded,'sdfsdfsd')
+            upload()
+        })
+
+        function upload() {
+            console.log('upload invoked')
+            // if (lastChunkIDUploaded > 0) {
+            //     console.log('continue from here', lastChunkIDUploaded)
+            // }
+            // if (lastChunkIDUploaded == 0) {
+                console.log(lastChunkIDUploaded, '==========')
+                const fileReader = new FileReader();
+                const theFile = f.files[0];
+                const theFileSize = f.files[0].size;
+                console.log(theFileSize)
+                fileReader.onload = async ev => {
+
+                    const CHUNK_SIZE = 50000;
+                    const chunkCount = ev.target.result.byteLength / CHUNK_SIZE;
+                    // if(theFileSize>)
+                    console.log("Read successfully", lastChunkIDUploaded);
+                    const fileName = Math.random() * 1000 + theFile.name;
+                    for (let chunkId = lastChunkIDUploaded; chunkId < chunkCount + 1; chunkId++) {
+                        // console.log('int the loop')
+                        if (isResumed) {
+                            const chunk = ev.target.result.slice(chunkId * CHUNK_SIZE, chunkId * CHUNK_SIZE + CHUNK_SIZE);
+                            // setTimeout(async () => {
+                            const response = await fetch("http://localhost:8080/upload", {
+                                "method": "POST",
+                                "headers": {
+                                    "content-type": "application/octet-stream",
+                                    "content-length": chunk.length,
+                                    "file-name": fileName
+                                },
+                                "body": chunk
+                            })
+
+                            if (response.status == 201) {
+                                // console.log('inthe response')
+                                lastChunkIDUploaded = chunkId
+                                console.log('lastuploadedchunkid', lastChunkIDUploaded)
+                                divOutput.textContent = `${lastChunkIDUploaded} uploaded out of ${chunkCount}`
+                            }
+                            else {
+                                divOutput.textContent = `${chunkId} uploaded out of ${chunkCount}, couldnt upload further`
+                            }
+                            // }, 0.5)
+                        }
+                        else {
+                            console.log('paused')
+                            return
+                        }
+
+                    }
+                    console.log(ev.target.result.byteLength);
+                }
+                fileReader.readAsArrayBuffer(theFile);
+            // }
+
+        }
     </script>
+
+
 </body>
+
 </html>

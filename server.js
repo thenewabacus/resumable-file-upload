@@ -1,23 +1,58 @@
 const http = require("http");
 const fs = require("fs")
+const path = require("path")
 const httpServer = http.createServer();
 httpServer.on("listening", () => console.log("Listening..."));
 httpServer.on("request", (req, res) => {
 
-    if (req.url === "/") {
-        res.end(fs.readFileSync("./public/index.html"));
-        return;
-    }
-    if (req.url === "/upload") {
-        const fileName = req.headers["file-name"];
-        req.on("data", chunk => { ``
-            fs.appendFileSync(fileName, chunk)
-            console.log(`received chunk! ${chunk.length}`)
-        })
-        res.end("uploaded!")
-    }
+  if (req.url === "/") {
+    res.end(fs.readFileSync("public/index.html"));
+    return;
+  }
+  if (req.url === "/upload") {
+    const fileName = 'uploads/' + req.headers["file-name"];
+    req.on("data", chunk => {
+      fs.appendFileSync(fileName, chunk)
+      res.statusCode = 201;
+
+      // Set the response header to indicate JSON content
+      // res.setHeader('Content-Type', 'application/json');
+
+      // Write the JSON response to the client
+      const jsonResponse = JSON.stringify({ response: 'ok' });
+      res.end(jsonResponse);
+      // console.log(`received chunk! ${chunk.length}`)
+    })
+    // res.end("uploaded!")
+  }
 
 
 })
 
-httpServer.listen(8080)
+httpServer.listen(8080, function () {
+  const folderPath = __dirname + '/uploads';
+  deleteFilesInFolder(folderPath);
+  console.log('listening')
+})
+
+function deleteFilesInFolder(folderPath) {
+  fs.readdir(folderPath, (err, files) => {
+    if (err) {
+      console.error('Error reading directory:', err);
+      return;
+    }
+
+    files.forEach(file => {
+      const filePath = path.join(folderPath, file);
+
+      fs.unlink(filePath, err => {
+        if (err) {
+          console.error('Error deleting file:', filePath, err);
+          return;
+        }
+
+        console.log('Deleted file:', filePath);
+      });
+    });
+  });
+}
