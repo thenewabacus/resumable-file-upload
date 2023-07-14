@@ -9,21 +9,19 @@ httpServer.on("request", (req, res) => {
     res.end(fs.readFileSync("public/index.html"));
     return;
   }
+  
   if (req.url === "/upload") {
     const fileName = 'uploads/' + req.headers["file-name"];
     req.on("data", chunk => {
       fs.appendFileSync(fileName, chunk)
       res.statusCode = 201;
 
-      // Set the response header to indicate JSON content
       // res.setHeader('Content-Type', 'application/json');
 
-      // Write the JSON response to the client
       const jsonResponse = JSON.stringify({ response: 'ok' });
       res.end(jsonResponse);
       // console.log(`received chunk! ${chunk.length}`)
     })
-    // res.end("uploaded!")
   }
 
 
