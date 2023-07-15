@@ -88,7 +88,7 @@ async function upload(file) {
         if (isResumed) {
             const chunk = file.fileData.slice(chunkId * CHUNK_SIZE, (chunkId * CHUNK_SIZE) + CHUNK_SIZE);
 
-            const response = await fetch("http://localhost:3000/upload", {
+            const response = await fetch("/upload", {
                 "method": "POST",
                 "headers": {
                     "content-type": "application/octet-stream",
