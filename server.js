@@ -9,6 +9,10 @@ httpServer.on("request", (req, res) => {
     res.end(fs.readFileSync("public/index.html"));
     return;
   }
+  if (req.url === "/app.js") {
+    res.end(fs.readFileSync("public/app.js"));
+    return;
+  }
   
   if (req.url === "/upload") {
     const fileName = 'uploads/' + req.headers["file-name"];
