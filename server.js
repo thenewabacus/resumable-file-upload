@@ -27,7 +27,7 @@ httpServer.on("request", (req, res) => {
 
 })
 
-httpServer.listen(8080, function () {
+httpServer.listen(3000, function () {
   const folderPath = __dirname + '/uploads';
   deleteFilesInFolder(folderPath);
   console.log('listening')
