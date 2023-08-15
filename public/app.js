@@ -4,8 +4,8 @@
        * 2 test the upload with multiple users simultaneously 
        * 2 organise the code
        * 3 integrate it with watchIT
-       *  DONE fix the resume functionality: it should not create a new file when resuming
-       */
+       *  DONE : fix the resume functionality: it should not create a new file when resuming
+*/
 let fileData = null;
 let CHUNK_SIZE = 0;
 let isResumed = true
@@ -49,7 +49,7 @@ async function readFile(f) {
         fileData = await new Promise((resolve, reject) => {
             fileReader.onload = (ev) => {
                 const fileMetadata = {
-                    Name: file.name,
+                    Name: "_"+(Math.random() * 1000) + "_"+file.name,
                     Size: file.size,
                     Type: file.type,
                     theFile: ev.target.result
@@ -69,26 +69,29 @@ async function readFile(f) {
 }
 async function upload(file) {
     console.log('upload invoked')
-    if (file.fileData.byteLength < 100 * 1024 * 1024) {
-        CHUNK_SIZE = 50000; // 50 KB
+
+    if (file.fileData.byteLength < 100 * 1024 * 1024) { //if file less than 100MB
+        CHUNK_SIZE = 50000; // let the chunk size be 50 KB
         console.log('chunk A ', file.fileData.byteLength / 1000000)
-    } else if (file.fileData.byteLength < 200 * 1024 * 1024) {
-        CHUNK_SIZE = 100000; // 100 KB
+
+    } else if (file.fileData.byteLength < 200 * 1024 * 1024) { //if the file is less than 200 MB
+        CHUNK_SIZE = 100000; // let the chunk size be 100 KB
         console.log('chunk B ', file.fileData.byteLength / 1000000)
-    } else if (file.fileData.byteLength < 500 * 1024 * 1024) {
-        CHUNK_SIZE = 200000; // 200 KB
+
+    } else if (file.fileData.byteLength < 500 * 1024 * 1024) { //if the file is less than 500 MB
+        CHUNK_SIZE = 200000; // let the chunk size be 200 KB
         console.log('chunk C ', file.fileData.byteLength / 1000000)
     } else {
-        CHUNK_SIZE = 500000; // 500 KB
+        CHUNK_SIZE = 500000; // let the chunk size be 500 KB
         console.log('chunk D ', file.fileData.byteLength / 1000000)
     }
     let chunkCount = Math.ceil(file.fileData.byteLength / CHUNK_SIZE);
-    // console.log(file.fileMetadata.Name, 'chink count')
+    // console.log(file.fileMetadata.Name, 'chuunk count')
     for (let chunkId = lastChunkIDUploaded + plusOne; chunkId < chunkCount + 1; chunkId++) {
         if (isResumed) {
             const chunk = file.fileData.slice(chunkId * CHUNK_SIZE, (chunkId * CHUNK_SIZE) + CHUNK_SIZE);
 
-            const response = await fetch("/upload", {
+            const response = await fetch("http://localhost/upload", {
                 "method": "POST",
                 "headers": {
                     "content-type": "application/octet-stream",
